@@ -11,7 +11,8 @@ import {
   faImage, 
   faTag, 
   faMoneyBillWave, 
-  faLayerGroup 
+  faLayerGroup,
+  faBoxesStacked
 } from '@fortawesome/free-solid-svg-icons';
 
 const mapProduct = (product) => ({
@@ -156,6 +157,7 @@ const Produk = ({ currentUser }) => {
     <div ref={pageRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-800">
       {errorMessage && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{errorMessage}</p>}
       {successMessage && <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{successMessage}</p>}
+      
       {/* BAR HEADER & PENCARIAN */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
         <div>
@@ -164,6 +166,13 @@ const Produk = ({ currentUser }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          
+          {/* BADGE JUMLAH BARANG (DI SAMPING KIRI CARI BARANG) */}
+          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-2 rounded-xl text-indigo-700 text-xs font-semibold shrink-0">
+            <FontAwesomeIcon icon={faBoxesStacked} className="text-indigo-600 text-xs" />
+            <span>Total: <strong className="font-extrabold text-indigo-900">{filteredProducts.length}</strong> Barang</span>
+          </div>
+
           {/* SEARCH BAR */}
           <div className="relative flex-1 sm:w-60">
             <FontAwesomeIcon icon={faSearch} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
