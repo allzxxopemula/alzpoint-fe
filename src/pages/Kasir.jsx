@@ -23,6 +23,17 @@ import {
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 
+// Helper pemutar efek suara dari folder public
+const playClickSound = () => {
+  const audio = new Audio('/kliksound.mp3');
+  audio.play().catch(() => {});
+};
+
+const playCancelCartSound = () => {
+  const audio = new Audio('/cancelkeranjang.mp3');
+  audio.play().catch(() => {});
+};
+
 const Kasir = ({ currentUser, selfCheckout = false }) => {
   const pageRef = usePageEntrance();
   const cartBadgeRef = useRef(null);
@@ -43,13 +54,12 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
   const [paymentMethod, setPaymentMethod] = useState('tunai');
   const [cashAmount, setCashAmount] = useState('');
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false); // State baru untuk Modal Pembayaran
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
   const [checkoutOrder, setCheckoutOrder] = useState(null);
   
-  // Membaca status hide gambar khusus kasir
   const hideImages = isCashierImageHidden();
 
   const paymentOptions = [
@@ -115,7 +125,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     return matchesCategory && matchesSearch;
   });
 
-  // GSAP: Murni Fade In Cepat tanpa Gerakan
   useEffect(() => {
     if (areGsapAnimationsEnabled() && gridRef.current && filteredProducts.length > 0) {
       gsap.fromTo(
@@ -136,8 +145,9 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     }
   };
 
-  // GSAP: Flying Ghost Animation (Masuk Keranjang)
+  // Flying Ghost Animation (Masuk Keranjang + Suara Klik)
   const handleAddToCartWithAnimation = (e, product) => {
+    playClickSound(); // Putar kliksound.mp3
     addToCart(product);
     if (!areGsapAnimationsEnabled()) return;
 
@@ -197,8 +207,10 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     });
   };
 
-  // GSAP: Flying Ghost Animation (Reset / Kembali ke Foto Produk)
+  // Flying Ghost Animation (Reset Keranjang + Suara Cancel)
   const handleResetCartWithAnimation = () => {
+    playCancelCartSound(); // Putar cancelkeranjang.mp3
+
     if (cart.length === 0) {
       resetTransaction();
       return;
@@ -320,12 +332,10 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
   const total = Math.max(0, subtotal - discountAmount);
   const change = Math.max(0, (parseInt(cashAmount) || 0) - total);
 
-  // Fungsi tambah nominal cepat
   const handleAddShortcutCash = (nominal) => {
     setCashAmount((prev) => String((parseInt(prev) || 0) + nominal));
   };
 
-  // GSAP: Pulse Animasi Ringan pada Total Pembayaran
   useEffect(() => {
     if (areGsapAnimationsEnabled() && totalPriceRef.current && total > 0) {
       gsap.fromTo(totalPriceRef.current,
@@ -373,7 +383,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       });
       setCheckoutOrder(response.data.data);
       setOrderNumber(response.data.data.order_number);
-      setIsPaymentModalOpen(false); // Tutup modal pembayaran
+      setIsPaymentModalOpen(false);
       setIsSuccessModalOpen(true);
       playSound('confirm');
     } catch (error) {
@@ -489,7 +499,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         </div>
       </div>
 
-      {/* KANAN: KERANJANG BELANJA (Fokus Daftar Barang) */}
+      {/* KANAN: KERANJANG BELANJA */}
       <div className="w-full bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex h-[calc(100vh-5rem)] min-h-0 flex-col self-start overflow-hidden lg:sticky lg:top-20">
         <div className="flex min-h-0 flex-1 flex-col">
           {/* HEADER KERANJANG */}
@@ -525,8 +535,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
             ) : (
               cart.map((item) => (
                 <div key={item.id} className="py-3 flex items-center justify-between gap-3 animate-in fade-in duration-200">
-                  
-                  {/* GAMBAR PRODUK & INFO ITEM */}
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
                     {!hideImages && item.image && (
                       <img
@@ -543,7 +551,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
                     </div>
                   </div>
 
-                  {/* KONTROL QUANTITY */}
                   <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200 shrink-0">
                     <button
                       onClick={() => updateQty(item.id, -1)}
@@ -576,7 +583,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
           </div>
         </div>
 
-        {/* TOTAL RINGKASAN & BUTTON PROSES KE MODAL */}
+        {/* TOTAL RINGKASAN & BUTTON PROSES */}
         <div className="shrink-0 border-t border-slate-100 pt-4 space-y-4">
           <div className="pt-2">
             <div className="flex justify-between items-center text-xs text-slate-500">
@@ -615,7 +622,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         </div>
       </div>
 
-      {/* MODAL OVERLAY PEMBAYARAN */}
+      {/* MODAL PEMBAYARAN */}
       {isPaymentModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-40 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto app-scrollbar">
@@ -630,7 +637,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
               </button>
             </div>
 
-            {/* INPUT NAMA PELANGGAN */}
             <div>
               <label htmlFor="modal-customer-name" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
                 Nama Pelanggan
@@ -647,7 +653,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
               />
             </div>
 
-            {/* PILIHAN METODE */}
             <div>
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                 Metode Pembayaran
@@ -670,7 +675,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
               </div>
             </div>
 
-            {/* INPUT NOMINAL UANG KHUSUS KASIR */}
             {!selfCheckout && paymentMethod === 'tunai' && (
               <div className="animate-in fade-in duration-200 bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
                 <div>
@@ -703,7 +707,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
                   </div>
                 </div>
 
-                {/* SHORTCUT TAMBAH UANG */}
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                     Tambah Cepat
@@ -721,14 +724,13 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
                   </div>
                 </div>
 
-<div className="flex justify-between items-center text-sm font-semibold text-slate-600 pt-2 border-t border-slate-200">
-  <span>Kembalian:</span>
-  <span className="text-emerald-600 font-extrabold text-base">Rp {change.toLocaleString('id-ID')}</span>
-</div>
+                <div className="flex justify-between items-center text-sm font-semibold text-slate-600 pt-2 border-t border-slate-200">
+                  <span>Kembalian:</span>
+                  <span className="text-emerald-600 font-extrabold text-base">Rp {change.toLocaleString('id-ID')}</span>
+                </div>
               </div>
             )}
 
-            {/* TOTAL & BUTTON CHECKOUT DI DALAM MODAL */}
             <div className="pt-2 border-t border-slate-100">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-xs text-slate-500 font-medium">Total Tagihan</span>

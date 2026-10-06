@@ -52,6 +52,7 @@ const Transaksi = () => {
   const [receiptTransaction, setReceiptTransaction] = useState(null);
   const [confirmOrder, setConfirmOrder] = useState(null);
   const [confirmNonCashOrder, setConfirmNonCashOrder] = useState(null);
+  const [cancelOrderConfirm, setCancelOrderConfirm] = useState(null);
   const [cashReceivedInput, setCashReceivedInput] = useState('');
   const [confirmSaving, setConfirmSaving] = useState(false);
   const [confirmError, setConfirmError] = useState('');
@@ -146,7 +147,7 @@ const Transaksi = () => {
     });
     setConfirmSaving(false);
     if (completedOrder) {
-      playSound('confirm'); // Efek Suara Konfirmasi Berhasil
+      playSound('confirm');
       setConfirmNonCashOrder(null);
       setSelectedTrx(null);
       setReceiptTransaction(completedOrder);
@@ -159,7 +160,7 @@ const Transaksi = () => {
 
     const amount = Number(cashReceivedInput);
     if (amount < confirmOrder.total) {
-      playSound('cancel'); // Efek Suara Gagal/Kurang Uang
+      playSound('cancel');
       setConfirmError('Uang diterima belum mencukupi total pembayaran.');
       return;
     }
@@ -171,14 +172,13 @@ const Transaksi = () => {
     });
     setConfirmSaving(false);
     if (completedOrder) {
-      playSound('confirm'); // Efek Suara Konfirmasi Berhasil
+      playSound('confirm');
       setConfirmOrder(null);
       setSelectedTrx(null);
       setReceiptTransaction(completedOrder);
     }
   };
 
-  // Filter Transaksi
   const filteredTransactions = transactions.filter((trx) => {
     const matchesStatus = filterStatus === 'Semua' || trx.status === filterStatus;
     const matchesSearch = 
@@ -217,6 +217,7 @@ const Transaksi = () => {
     <div ref={pageRef} className="space-y-6 bg-slate-50 min-h-screen text-slate-800">
       {errorMessage && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{errorMessage}</p>}
       {loading && <p className="text-xs text-slate-500">Memuat antrean transaksi...</p>}
+      
       {/* HEADER & FILTER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
         <div>
@@ -225,7 +226,6 @@ const Transaksi = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          {/* BAR PENCARIAN */}
           <div className="relative flex-1 sm:w-60">
             <FontAwesomeIcon icon={faSearch} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
@@ -240,7 +240,6 @@ const Transaksi = () => {
             />
           </div>
 
-          {/* FILTER STATUS */}
           <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
             {['Semua', 'Pending', 'Completed', 'Canceled'].map((status) => (
               <button
@@ -287,7 +286,6 @@ const Transaksi = () => {
                   <td className="px-5 py-4">{getStatusBadge(trx.status)}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-center gap-2">
-                      {/* AKSI HANYA JIKA PENDING */}
                       {trx.status === 'Pending' && (
                         <>
                           <button
@@ -297,10 +295,7 @@ const Transaksi = () => {
                             Confirm
                           </button>
                           <button
-                            onClick={() => {
-                              playSound('cancel'); // Suara Cancel saat membatalkan transaksi dari tabel
-                              handleUpdateStatus(trx.orderId, 'canceled');
-                            }}
+                            onClick={() => setCancelOrderConfirm(trx)}
                             className="bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded-lg text-xs font-semibold transition"
                           >
                             Cancel
@@ -320,7 +315,6 @@ const Transaksi = () => {
                         </button>
                       )}
 
-                      {/* BUTTON LIHAT DETAIL */}
                       <button
                         onClick={() => setSelectedTrx(trx)}
                         className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 rounded-lg hover:bg-indigo-50 transition"
@@ -351,7 +345,7 @@ const Transaksi = () => {
               </div>
               <button
                 onClick={() => {
-                  playSound('cancel'); // Suara Batal/Tutup Modal
+                  playSound('cancel');
                   setSelectedTrx(null);
                 }}
                 className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
@@ -362,7 +356,6 @@ const Transaksi = () => {
 
             <ReceiptHeader settings={cooperativeSettings} />
 
-            {/* INFO TRANSAKSI */}
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs space-y-2">
               <div className="flex justify-between">
                 <span className="text-slate-400">No. Transaksi</span>
@@ -382,7 +375,6 @@ const Transaksi = () => {
               </div>
             </div>
 
-            {/* RINCIAN ITEM */}
             <div>
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Item Dibeli</h4>
               <div className="app-scrollbar divide-y divide-slate-100 max-h-40 overflow-y-auto overscroll-y-contain pr-1">
@@ -398,25 +390,23 @@ const Transaksi = () => {
               </div>
             </div>
 
-            {/* TOTAL */}
             <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
               <span className="text-xs text-slate-400 font-medium">Total Pembayaran</span>
               <span className="text-lg font-extrabold text-indigo-600">Rp {selectedTrx.total.toLocaleString('id-ID')}</span>
             </div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs space-y-2">
-                <div className="flex justify-between text-slate-500">
-                  <span>Uang Dibayarkan</span>
-                  <span className="font-semibold text-slate-800">Rp {selectedTrx.cashReceived.toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between text-slate-500">
-                  <span>Kembalian</span>
-                  <span className="font-bold text-emerald-700">Rp {selectedTrx.change.toLocaleString('id-ID')}</span>
-                </div>
+            <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs space-y-2">
+              <div className="flex justify-between text-slate-500">
+                <span>Uang Dibayarkan</span>
+                <span className="font-semibold text-slate-800">Rp {selectedTrx.cashReceived.toLocaleString('id-ID')}</span>
               </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Kembalian</span>
+                <span className="font-bold text-emerald-700">Rp {selectedTrx.change.toLocaleString('id-ID')}</span>
+              </div>
+            </div>
 
-              <ReceiptFooter settings={cooperativeSettings} />
+            <ReceiptFooter settings={cooperativeSettings} />
 
-            {/* TOMBOL AKSI MODAL */}
             <div className="flex gap-2 pt-2">
               {selectedTrx.status === 'Pending' && (
                 <button
@@ -439,6 +429,8 @@ const Transaksi = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL KONFIRMASI PEMBAYARAN TUNAI */}
       {confirmOrder && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
           <form onSubmit={handleCashConfirmation} className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
@@ -448,28 +440,33 @@ const Transaksi = () => {
             </div>
             <div>
               <label htmlFor="cash-received-confirm" className="mb-1 block text-xs font-bold text-slate-600">Uang Diterima (Rp)</label>
-              <input
-                id="cash-received-confirm"
-                name="cash_received_confirmation"
-                type="number"
-                min={confirmOrder.total}
-                step="0.01"
-                required
-                autoFocus
-                value={cashReceivedInput}
-                onChange={(event) => setCashReceivedInput(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 focus:border-indigo-600 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setCashReceivedInput(String(confirmOrder.total));
-                  setConfirmError('');
-                }}
-                className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100"
-              >
-                Uang Pas
-              </button>
+              
+              {/* INPUT DAN TOMBOL UANG PAS DI SEBELAH KANAN */}
+              <div className="flex items-center gap-2">
+                <input
+                  id="cash-received-confirm"
+                  name="cash_received_confirmation"
+                  type="number"
+                  min={confirmOrder.total}
+                  step="0.01"
+                  required
+                  autoFocus
+                  value={cashReceivedInput}
+                  onChange={(event) => setCashReceivedInput(event.target.value)}
+                  className="w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900 focus:border-indigo-600 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCashReceivedInput(String(confirmOrder.total));
+                    setConfirmError('');
+                  }}
+                  className="shrink-0 whitespace-nowrap rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-100 active:scale-95"
+                >
+                  Uang Pas
+                </button>
+              </div>
+
               {Number(cashReceivedInput) > 0 && (
                 <p className="mt-2 flex justify-between text-xs text-slate-500">
                   <span>Kembalian</span>
@@ -482,7 +479,7 @@ const Transaksi = () => {
               <button
                 type="button"
                 onClick={() => {
-                  playSound('cancel'); // Suara Batal
+                  playSound('cancel');
                   setConfirmOrder(null);
                 }}
                 disabled={confirmSaving}
@@ -501,6 +498,8 @@ const Transaksi = () => {
           </form>
         </div>
       )}
+
+      {/* MODAL KONFIRMASI PEMBAYARAN NON-TUNAI */}
       {confirmNonCashOrder && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
           <div role="dialog" aria-modal="true" aria-labelledby="noncash-confirm-title" className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
@@ -517,7 +516,7 @@ const Transaksi = () => {
               <button
                 type="button"
                 onClick={() => {
-                  playSound('cancel'); // Suara Batal
+                  playSound('cancel');
                   setConfirmNonCashOrder(null);
                 }}
                 disabled={confirmSaving}
@@ -537,6 +536,44 @@ const Transaksi = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL PERINGATAN BUKTI BANTUAN/KONFIRMASI CANCEL TRANSAKSI */}
+      {cancelOrderConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" aria-labelledby="cancel-confirm-title" className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
+            <div>
+              <h3 id="cancel-confirm-title" className="text-base font-bold text-slate-900">Konfirmasi Pembatalan</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                Apakah Anda yakin untuk cancel transaksi <span className="font-bold text-slate-800">{cancelOrderConfirm.id}</span>?
+              </p>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('cancel');
+                  setCancelOrderConfirm(null);
+                }}
+                className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Tidak
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  playSound('cancel');
+                  handleUpdateStatus(cancelOrderConfirm.orderId, 'canceled');
+                  setCancelOrderConfirm(null);
+                }}
+                className="flex-1 rounded-xl bg-rose-600 px-3 py-2.5 text-xs font-bold text-white hover:bg-rose-700 transition"
+              >
+                Ya, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {(receiptTransaction?.status === 'Confirmed' || receiptTransaction?.status === 'Completed') && (
         <ReceiptModal
           transactionData={{
