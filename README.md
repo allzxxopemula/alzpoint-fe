@@ -32,6 +32,4 @@ Alz Point adalah aplikasi Point of Sale (POS) berbasis web modern yang dirancang
 
 💡 Developer
 Dikembangkan oleh Aldo Rendy Julian Alfiansyah (Allzxxo) dan Contributor
-Full-stack Web Developer yang berfokus pada pengembangan antarmuka modern (React.js, Tailwind CSS) dan sistem backend yang handal (Laravel, Node.js).
-
-php artisan serve
+Full-stack Web Developer yang berfokus pada pengembangan antarmuka modern (React.js, Tailwind CSS) dan sistem backend yang handal (Laravel, Node.js).rve
