@@ -19,7 +19,8 @@ import {
   faUtensils,
   faGlassWater,
   faCookieBite,
-  faBoxes
+  faBoxes,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 
 const Kasir = ({ currentUser, selfCheckout = false }) => {
@@ -42,6 +43,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
   const [paymentMethod, setPaymentMethod] = useState('tunai');
   const [cashAmount, setCashAmount] = useState('');
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false); // State baru untuk Modal Pembayaran
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
@@ -318,6 +320,11 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
   const total = Math.max(0, subtotal - discountAmount);
   const change = Math.max(0, (parseInt(cashAmount) || 0) - total);
 
+  // Fungsi tambah nominal cepat
+  const handleAddShortcutCash = (nominal) => {
+    setCashAmount((prev) => String((parseInt(prev) || 0) + nominal));
+  };
+
   // GSAP: Pulse Animasi Ringan pada Total Pembayaran
   useEffect(() => {
     if (areGsapAnimationsEnabled() && totalPriceRef.current && total > 0) {
@@ -328,7 +335,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     }
   }, [total]);
 
-  const handleCheckout = async () => {
+  const handleOpenPaymentModal = () => {
     if (cart.length === 0) {
       if (areGsapAnimationsEnabled()) {
         gsap.fromTo(checkoutBtnRef.current,
@@ -338,18 +345,17 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       }
       return;
     }
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
     if (!customerName.trim()) {
       playSound('cancel');
       setCheckoutError('Nama pelanggan wajib diisi.');
       return;
     }
     if (!selfCheckout && paymentMethod === 'tunai' && (parseInt(cashAmount) || 0) < total) {
-      if (areGsapAnimationsEnabled()) {
-        gsap.fromTo(checkoutBtnRef.current,
-          { x: -5 },
-          { x: 5, duration: 0.05, yoyo: true, repeat: 5, ease: 'none', onComplete: () => gsap.set(checkoutBtnRef.current, { clearProps: 'all' }) }
-        );
-      }
       playSound('cancel');
       setCheckoutError('Nominal tunai belum mencukupi total pembelian.');
       return;
@@ -367,6 +373,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       });
       setCheckoutOrder(response.data.data);
       setOrderNumber(response.data.data.order_number);
+      setIsPaymentModalOpen(false); // Tutup modal pembayaran
       setIsSuccessModalOpen(true);
       playSound('confirm');
     } catch (error) {
@@ -384,11 +391,12 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     setOrderNumber('');
     setCheckoutOrder(null);
     setIsSuccessModalOpen(false);
+    setIsPaymentModalOpen(false);
     setCheckoutError('');
   };
 
   return (
-    <div ref={pageRef} className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_24rem] gap-6 min-h-[calc(100vh-5rem)] bg-slate-50 text-slate-800 items-start">
+    <div ref={pageRef} className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_24rem] gap-6 min-h-[calc(100vh-5rem)] bg-slate-50 text-slate-800 items-start relative">
       {errorMessage && <p role="alert" className="fixed top-20 right-6 z-30 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{errorMessage}</p>}
       
       {/* KIRI: KATALOG PRODUK */}
@@ -481,7 +489,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         </div>
       </div>
 
-      {/* KANAN: KERANJANG BELANJA */}
+      {/* KANAN: KERANJANG BELANJA (Fokus Daftar Barang) */}
       <div className="w-full bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex h-[calc(100vh-5rem)] min-h-0 flex-col self-start overflow-hidden lg:sticky lg:top-20">
         <div className="flex min-h-0 flex-1 flex-col">
           {/* HEADER KERANJANG */}
@@ -568,96 +576,8 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
           </div>
         </div>
 
-        {/* METODE PEMBAYARAN & TOTAL */}
+        {/* TOTAL RINGKASAN & BUTTON PROSES KE MODAL */}
         <div className="shrink-0 border-t border-slate-100 pt-4 space-y-4">
-          {/* INPUT NAMA PELANGGAN */}
-          <div>
-            <label htmlFor="customer-name" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-              Nama Pelanggan
-            </label>
-            <input
-              id="customer-name"
-              name="customer_name"
-              type="text"
-              required
-              maxLength={100}
-              value={customerName}
-              onChange={(event) => setCustomerName(event.target.value)}
-              placeholder="Masukkan nama pelanggan"
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-indigo-600 transition-colors"
-            />
-          </div>
-
-          {/* PILIHAN METODE */}
-          <div role="group" aria-labelledby="payment-method-label">
-            <p id="payment-method-label" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-              Metode Pembayaran
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {paymentOptions.map((m) => (
-                <button
-                  key={m.name}
-                  onClick={() => setPaymentMethod(m.value)}
-                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-semibold border active:scale-95 transition-all duration-150 ${
-                    paymentMethod === m.value
-                      ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
-                      : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                  }`}
-                >
-                  <FontAwesomeIcon icon={m.icon} className="mb-1 text-sm" />
-                  <span>{m.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* INPUT NOMINAL UANG (TUNAI) */}
-          {!selfCheckout && paymentMethod === 'tunai' && (
-            <div className="animate-in fade-in duration-200">
-              <label htmlFor="cash-amount" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Uang Diterima (Rp)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="cash-amount"
-                  name="cash_received"
-                  type="number"
-                  placeholder="0"
-                  min={total}
-                  required={selfCheckout}
-                  inputMode="numeric"
-                  value={cashAmount}
-                  onChange={(e) => setCashAmount(e.target.value)}
-                  className="w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:outline-none transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setCashAmount(String(total))}
-                  className="shrink-0 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-700 active:scale-95 transition-all hover:bg-indigo-100"
-                >
-                  Uang Pas
-                </button>
-                {cashAmount !== '' && (
-                  <button
-                    type="button"
-                    onClick={handleResetCartWithAnimation}
-                    className="shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 active:scale-95 transition-all hover:bg-rose-100"
-                    title="Kosongkan uang dan reset keranjang"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-              {parseInt(cashAmount) > 0 && (
-                <div className="flex justify-between text-xs mt-1.5 font-semibold text-slate-600 animate-in fade-in">
-                  <span>Kembalian:</span>
-                  <span className="text-emerald-600 text-sm">Rp {change.toLocaleString('id-ID')}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TOTAL & BUTTON CHECKOUT */}
           <div className="pt-2">
             <div className="flex justify-between items-center text-xs text-slate-500">
               <span>Subtotal</span>
@@ -669,11 +589,11 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
                 <span>- Rp {discountAmount.toLocaleString('id-ID')}</span>
               </div>
             )}
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center mb-4 mt-2">
               <span className="text-xs text-slate-400 font-medium">Total Pembayaran</span>
               <span 
                 ref={totalPriceRef} 
-                className="text-xl font-extrabold text-indigo-600 origin-right inline-block"
+                className="text-2xl font-extrabold text-indigo-600 origin-right inline-block"
               >
                 Rp {total.toLocaleString('id-ID')}
               </span>
@@ -681,20 +601,162 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
 
             <button
               ref={checkoutBtnRef}
-              onClick={handleCheckout}
-              disabled={checkoutLoading}
-              className={`w-full py-3 rounded-xl font-bold text-xs shadow-lg transition-all active:scale-[0.98] ${
+              onClick={handleOpenPaymentModal}
+              disabled={cart.length === 0}
+              className={`w-full py-3.5 rounded-xl font-bold text-xs shadow-lg transition-all active:scale-[0.98] ${
                 cart.length === 0 
-                ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
                 : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30'
               }`}
             >
-              {checkoutLoading ? 'Mengirim pesanan...' : 'Konfirmasi & Bayar Sekarang'}
+              Proses Pembayaran
             </button>
-            {checkoutError && <p role="alert" className="mt-2 text-xs text-rose-600 animate-in fade-in">{checkoutError}</p>}
           </div>
         </div>
       </div>
+
+      {/* MODAL OVERLAY PEMBAYARAN */}
+      {isPaymentModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-40 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto app-scrollbar">
+            
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-lg font-bold text-slate-900">Proses Pembayaran</h3>
+              <button 
+                onClick={() => setIsPaymentModalOpen(false)} 
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+
+            {/* INPUT NAMA PELANGGAN */}
+            <div>
+              <label htmlFor="modal-customer-name" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                Nama Pelanggan
+              </label>
+              <input
+                id="modal-customer-name"
+                type="text"
+                required
+                maxLength={100}
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Masukkan nama pelanggan"
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-indigo-600 transition-colors"
+              />
+            </div>
+
+            {/* PILIHAN METODE */}
+            <div>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                Metode Pembayaran
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {paymentOptions.map((m) => (
+                  <button
+                    key={m.name}
+                    onClick={() => setPaymentMethod(m.value)}
+                    className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-xl text-xs font-semibold border active:scale-95 transition-all duration-150 ${
+                      paymentMethod === m.value
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                        : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={m.icon} className="mb-1 text-sm" />
+                    <span>{m.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* INPUT NOMINAL UANG KHUSUS KASIR */}
+            {!selfCheckout && paymentMethod === 'tunai' && (
+              <div className="animate-in fade-in duration-200 bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                    Uang Diterima (Rp)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      placeholder="0"
+                      min={total}
+                      value={cashAmount}
+                      onChange={(e) => setCashAmount(e.target.value)}
+                      className="w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 focus:border-indigo-600 focus:outline-none transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCashAmount(String(total))}
+                      className="shrink-0 rounded-xl border border-indigo-200 bg-indigo-100 px-3 py-2 text-xs font-bold text-indigo-700 active:scale-95 transition-all hover:bg-indigo-200"
+                    >
+                      Uang Pas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCashAmount('')}
+                      className="shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 active:scale-95 transition-all hover:bg-rose-100"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* SHORTCUT TAMBAH UANG */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    Tambah Cepat
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[2000, 5000, 10000, 20000, 50000, 100000].map((nominal) => (
+                      <button
+                        key={nominal}
+                        onClick={() => handleAddShortcutCash(nominal)}
+                        className="py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-bold text-slate-600 active:scale-95 hover:bg-slate-100 hover:text-indigo-600 transition-all shadow-sm"
+                      >
+                        +{nominal.toLocaleString('id-ID')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+<div className="flex justify-between items-center text-sm font-semibold text-slate-600 pt-2 border-t border-slate-200">
+  <span>Kembalian:</span>
+  <span className="text-emerald-600 font-extrabold text-base">Rp {change.toLocaleString('id-ID')}</span>
+</div>
+              </div>
+            )}
+
+            {/* TOTAL & BUTTON CHECKOUT DI DALAM MODAL */}
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-xs text-slate-500 font-medium">Total Tagihan</span>
+                <span className="text-2xl font-extrabold text-indigo-600">Rp {total.toLocaleString('id-ID')}</span>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPaymentModalOpen(false)}
+                  className="w-1/3 py-3 rounded-xl font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all active:scale-[0.98]"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleCheckout}
+                  disabled={checkoutLoading}
+                  className="w-2/3 py-3 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 transition-all active:scale-[0.98]"
+                >
+                  {checkoutLoading ? 'Memproses...' : 'Konfirmasi Pembayaran'}
+                </button>
+              </div>
+              {checkoutError && <p role="alert" className="mt-3 text-center text-xs font-medium text-rose-600 animate-in fade-in">{checkoutError}</p>}
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* MODAL SUKSES TRANSAKSI */}
       {isSuccessModalOpen && (
