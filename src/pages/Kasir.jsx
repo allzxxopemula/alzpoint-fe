@@ -192,7 +192,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         ghost.remove(); 
         gsap.fromTo(cartBadgeRef.current, 
           { scale: 1.3, backgroundColor: '#10B981', color: '#ffffff' }, 
-          // Hapus set warna eksplisit agar bisa dikontrol kembali oleh class/CSS theme default saat selesai
           { scale: 1, duration: 0.25, ease: 'power2.out', clearProps: 'backgroundColor,color' }
         );
       }
@@ -285,6 +284,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     setOrderNumber('');
     setCheckoutOrder(null);
     setIsSuccessModalOpen(false);
+    setCheckoutError('');
   };
 
   return (
@@ -386,7 +386,19 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         <div className="flex min-h-0 flex-1 flex-col">
           {/* HEADER KERANJANG */}
           <div className="flex shrink-0 justify-between items-center pb-4 border-b border-slate-100">
-            <h2 className="font-bold text-slate-900 text-base">Keranjang Belanja</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-slate-900 text-base">Keranjang Belanja</h2>
+              {cart.length > 0 && (
+                <button
+                  type="button"
+                  onClick={resetTransaction}
+                  className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-md transition-colors"
+                  title="Reset seluruh isi keranjang & form"
+                >
+                  Reset Keranjang
+                </button>
+              )}
+            </div>
             <span 
               ref={cartBadgeRef} 
               className="inline-block text-xs font-semibold bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full origin-center transition-colors"
@@ -447,24 +459,23 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
 
         {/* METODE PEMBAYARAN & TOTAL */}
         <div className="shrink-0 border-t border-slate-100 pt-4 space-y-4">
-          {selfCheckout && (
-            <div>
-              <label htmlFor="customer-name" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Nama Pelanggan
-              </label>
-              <input
-                id="customer-name"
-                name="customer_name"
-                type="text"
-                required
-                maxLength={100}
-                value={customerName}
-                onChange={(event) => setCustomerName(event.target.value)}
-                placeholder="Masukkan nama"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-indigo-600 transition-colors"
-              />
-            </div>
-          )}
+          {/* INPUT NAMA PELANGGAN (Wajib Diisi oleh Kasir/Admin maupun Pelanggan) */}
+          <div>
+            <label htmlFor="customer-name" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+              Nama Pelanggan
+            </label>
+            <input
+              id="customer-name"
+              name="customer_name"
+              type="text"
+              required
+              maxLength={100}
+              value={customerName}
+              onChange={(event) => setCustomerName(event.target.value)}
+              placeholder="Masukkan nama pelanggan"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-indigo-600 transition-colors"
+            />
+          </div>
 
           {/* PILIHAN METODE */}
           <div role="group" aria-labelledby="payment-method-label">
@@ -489,11 +500,11 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
             </div>
           </div>
 
-          {/* INPUT NAMA UANG (TUNAI) */}
+          {/* INPUT NOMINAL UANG (TUNAI) */}
           {!selfCheckout && paymentMethod === 'tunai' && (
             <div className="animate-in fade-in duration-200">
               <label htmlFor="cash-amount" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                {selfCheckout ? 'Nominal Pembayaran (Rp)' : 'Uang Diterima (Rp)'}
+                Uang Diterima (Rp)
               </label>
               <div className="flex gap-2">
                 <input
@@ -515,6 +526,16 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
                 >
                   Uang Pas
                 </button>
+                {cashAmount !== '' && (
+                  <button
+                    type="button"
+                    onClick={() => setCashAmount('')}
+                    className="shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 active:scale-95 transition-all hover:bg-rose-100"
+                    title="Kosongkan uang"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
               {parseInt(cashAmount) > 0 && (
                 <div className="flex justify-between text-xs mt-1.5 font-semibold text-slate-600 animate-in fade-in">

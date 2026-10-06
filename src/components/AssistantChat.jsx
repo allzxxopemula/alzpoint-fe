@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowUp,
+  faCheck,
+  faCopy,
   faEye,
   faEyeSlash,
   faKey,
@@ -14,7 +16,15 @@ import {
 const API_KEY_STORAGE = 'alzpoint-gemini-api-key';
 const CHAT_STORAGE = 'alzpoint-ai-chat-v1';
 const MODEL_ID = 'gemini-2.5-flash';
+
+// Daftar API key gratis / fallback
+const PUBLIC_API_KEYS = [
+  'AIzaSyD688z3xzVTWy4oUXI_MOReSb4YmgrYilI',
+  'AIzaSyCLDodwPwhB9_274tJxKW6JFTUOPFqRx1E',
+];
+
 const SYSTEM_PROMPT = `Kamu adalah asisten aplikasi kasir AlzPoint. Jawab dalam Bahasa Indonesia dengan ramah, ringkas, dan praktis. Fokus hanya pada cara memakai fitur AlzPoint (Dashboard, Kasir, Transaksi, Produk, Pelanggan, Laporan, Laporan Bulanan, Pengaturan, tema) dan tips operasional kasir, stok, serta pelayanan. Jika pertanyaan di luar cakupan, jelaskan batasanmu lalu arahkan kembali ke AlzPoint. Jangan mengaku melihat data transaksi langsung, jangan mengarang isi layar atau angka, dan minta pengguna membuka halaman terkait bila pertanyaan memerlukan data aplikasi. Jangan meminta atau mengulang API key, password, token, maupun data pembayaran sensitif. Jika ditanya siapakah Developer atau Pencipta aplikasi ini jawab "Allzxxo"`;
+
 const SUGGESTED_QUESTIONS = [
   'Bagaimana cara konfirmasi pesanan?',
   'Apa tips mengelola stok yang baik?',
@@ -59,7 +69,6 @@ function readStoredMessages() {
 function renderFormattedMessage(text) {
   if (!text) return null;
 
-  // Split teks berdasarkan baris baru
   const lines = text.split('\n');
   const elements = [];
   let currentList = [];
@@ -88,7 +97,6 @@ function renderFormattedMessage(text) {
   };
 
   const parseInlineStyles = (lineText) => {
-    // Regex untuk menangkap **bold** dan *italic*
     const parts = lineText.split(/(\*\*.*?\*\*|\*.*?\*)/g);
     return parts.map((part, index) => {
       if (part.startsWith('**') && part.endsWith('**')) {
@@ -104,7 +112,6 @@ function renderFormattedMessage(text) {
   lines.forEach((line, index) => {
     const trimmed = line.trim();
 
-    // Deteksi Bullet List (- atau *)
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
       const content = parseInlineStyles(trimmed.slice(2));
       if (isNumberedList && currentList.length > 0) flushList();
@@ -113,7 +120,6 @@ function renderFormattedMessage(text) {
       return;
     }
 
-    // Deteksi Numbered List (1. , 2. )
     const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
     if (numberedMatch) {
       const content = parseInlineStyles(numberedMatch[2]);
@@ -123,7 +129,6 @@ function renderFormattedMessage(text) {
       return;
     }
 
-    // Jika bukan baris list, bersihkan antrean list sebelumnya
     flushList();
 
     if (trimmed === '') {
@@ -146,6 +151,7 @@ export default function AssistantChat({ isOpen, onClose }) {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [isKeySettingsOpen, setIsKeySettingsOpen] = useState(!readStoredKey());
   const [showApiKey, setShowApiKey] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
   const [messages, setMessages] = useState(readStoredMessages);
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -211,14 +217,22 @@ export default function AssistantChat({ isOpen, onClose }) {
     }
   };
 
+  const handleCopyKey = (keyText, index) => {
+    navigator.clipboard.writeText(keyText).then(() => {
+      setCopiedIndex(index);
+      setApiKeyInput(keyText);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }).catch(() => {
+      setApiKeyInput(keyText);
+    });
+  };
+
   const sendMessage = async (suggestedText) => {
     const text = (suggestedText || draft).trim();
     if (!text || isSending) return;
-    if (!apiKey) {
-      setIsKeySettingsOpen(true);
-      setErrorMessage('Tambahkan API key Gemini untuk mulai bertanya.');
-      return;
-    }
+
+    // Gunakan key tersimpan atau gunakan fallback dari daftar API publik
+    const activeApiKey = apiKey.trim() || PUBLIC_API_KEYS[0];
 
     const nextMessages = [...messages, {
       id: createMessageId('user'),
@@ -238,7 +252,7 @@ export default function AssistantChat({ isOpen, onClose }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
+          'x-goog-api-key': activeApiKey,
         },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -400,6 +414,35 @@ export default function AssistantChat({ isOpen, onClose }) {
                   Hapus API key tersimpan
                 </button>
               )}
+
+              {/* Bagian API Key Gratis */}
+              <div className="mt-6 border-t border-[var(--theme-border)] pt-4">
+                <h4 className="text-xs font-bold text-[var(--theme-text)]">API Key Gratis (Siap Pakai)</h4>
+                <p className="mt-0.5 text-[10px] text-[var(--theme-muted)]">
+                  Klik tombol salin di bawah untuk menyalin API key gratis dan tempelkan ke kolom input di atas. API bisa saja limit dikarenakan banyak pengguna, lebih baik pakai API sendiri
+                </p>
+                <div className="mt-3 space-y-2">
+                  {PUBLIC_API_KEYS.map((key, idx) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between rounded-xl border border-[var(--theme-border)] bg-[var(--theme-surface)] p-2.5 text-xs"
+                    >
+                      <code className="truncate pr-2 font-mono text-[11px] text-[var(--theme-text)]">
+                        {key.slice(0, 12)}...{key.slice(-6)}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyKey(key, idx)}
+                        className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--theme-accent)]/10 px-2.5 py-1 text-[11px] font-semibold text-[var(--theme-accent)] transition hover:bg-[var(--theme-accent)] hover:text-white"
+                      >
+                        <FontAwesomeIcon icon={copiedIndex === idx ? faCheck : faCopy} className="text-[10px]" />
+                        {copiedIndex === idx ? 'Tersalin' : 'Salin'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <p className="mt-4 text-[10px] leading-relaxed text-[var(--theme-muted)]">
                 Model: Gemini 2.5 Flash. Key browser tetap dapat dilihat oleh pengguna perangkat ini; gunakan key khusus dengan batas penggunaan.
               </p>
@@ -449,7 +492,6 @@ export default function AssistantChat({ isOpen, onClose }) {
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[88%] rounded-2xl px-3.5 py-3 text-xs leading-relaxed ${message.role === 'user' ? 'rounded-br-md bg-[var(--theme-accent)] text-white' : 'rounded-bl-md bg-[var(--theme-background)] text-[var(--theme-text)]'}`}>
-                    {/* Menggunakan renderer pemformatan agar bold, list poin, dll tampil rapi */}
                     {message.role === 'user' ? (
                       <p className="whitespace-pre-wrap break-words">{message.text}</p>
                     ) : (

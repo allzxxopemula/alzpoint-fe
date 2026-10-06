@@ -68,7 +68,7 @@ export default function CategoryManager() {
   };
 
   return (
-    <section className="max-w-3xl space-y-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
+    <section className="w-full space-y-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
       <header>
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--theme-accent)]/10 text-[var(--theme-accent)]">
