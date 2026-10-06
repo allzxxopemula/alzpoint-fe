@@ -16,7 +16,7 @@ Alz Point adalah aplikasi Point of Sale (POS) berbasis web modern yang dirancang
 
 ### Frontend
 * **Framework:** React.js dengan Vite
-* **Styling:** Tailwind CSS (Modern Neo-brutalism & Clean UI)
+* **Styling:** Tailwind CSS
 * **Animasi:** GSAP (GreenSock Animation Platform) untuk interaksi UI yang mulus
 * **HTTP Client:** Axios dengan Interceptors
 
