@@ -138,7 +138,9 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
   const handleAddToCartWithAnimation = (e, product) => {
     playSound('click');
     addToCart(product);
-    if (!areGsapAnimationsEnabled()) return;
+
+    // Jika GSAP mati atau opsi hideImages aktif, batalkan semua animasi
+    if (!areGsapAnimationsEnabled() || hideImages) return;
 
     const card = e.currentTarget;
     const targetRect = cartBadgeRef.current?.getBoundingClientRect();
@@ -151,7 +153,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     ghost.style.pointerEvents = 'none';
     
     const img = card.querySelector('img'); 
-    if (img && !hideImages) {
+    if (img) {
       const imgRect = img.getBoundingClientRect();
       ghost.style.top = `${imgRect.top}px`;
       ghost.style.left = `${imgRect.left}px`;
@@ -162,16 +164,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       ghost.style.backgroundPosition = 'center';
       ghost.style.borderRadius = '12px';
       ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
-    } else {
-      const cardRect = card.getBoundingClientRect();
-      ghost.style.top = `${cardRect.top}px`;
-      ghost.style.left = `${cardRect.left}px`;
-      ghost.style.width = `${cardRect.width}px`;
-      ghost.style.height = `${cardRect.height}px`;
-      ghost.style.backgroundColor = 'transparent';
-      ghost.style.border = '2px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)'; 
-      ghost.style.borderRadius = '16px'; 
-      ghost.style.boxShadow = '0 15px 35px color-mix(in srgb, var(--theme-accent) 40%, transparent), inset 0 0 20px color-mix(in srgb, var(--theme-accent) 20%, transparent)'; 
     }
 
     document.body.appendChild(ghost);
@@ -200,12 +192,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
   const handleResetCartWithAnimation = () => {
     playSound('reset');
 
-    if (cart.length === 0) {
-      resetTransaction();
-      return;
-    }
-
-    if (!areGsapAnimationsEnabled() || !cartBadgeRef.current) {
+    if (cart.length === 0 || !areGsapAnimationsEnabled() || !cartBadgeRef.current || hideImages) {
       resetTransaction();
       return;
     }
@@ -238,26 +225,19 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       ghost.style.height = '32px';
       ghost.style.opacity = '1';
 
-      if (item.image && !hideImages) {
+      if (item.image) {
         ghost.style.backgroundImage = `url(${item.image})`;
         ghost.style.backgroundSize = 'cover';
         ghost.style.backgroundPosition = 'center';
         ghost.style.borderRadius = '12px';
         ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.25)';
-      } else {
-        ghost.style.backgroundColor = 'transparent';
-        ghost.style.border = '2px solid color-mix(in srgb, var(--theme-accent) 40%, transparent)';
-        ghost.style.borderRadius = '12px';
-        ghost.style.boxShadow = '0 10px 25px color-mix(in srgb, var(--theme-accent) 40%, transparent)';
       }
 
       document.body.appendChild(ghost);
 
       if (targetCard) {
         const imgEl = targetCard.querySelector('img');
-        const destRect = (imgEl && !hideImages) 
-          ? imgEl.getBoundingClientRect() 
-          : targetCard.getBoundingClientRect();
+        const destRect = imgEl ? imgEl.getBoundingClientRect() : targetCard.getBoundingClientRect();
 
         gsap.to(ghost, {
           x: destRect.left - startX,
