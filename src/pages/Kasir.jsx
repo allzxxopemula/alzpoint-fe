@@ -452,7 +452,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
               className="bg-white rounded-2xl border border-slate-100 p-3 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between group relative active:scale-[0.98]"
             >
               {!hideImages ? (
-                <div className="relative w-full h-28 rounded-xl overflow-hidden mb-3 bg-slate-100">
+                <div className="relative w-full h-28 overflow-hidden mb-3 bg-slate-100" style={{ borderRadius: 'var(--card-radius)' }}>
                   <img
                     src={product.image}
                     alt={product.name}
