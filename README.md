@@ -29,59 +29,9 @@ Alz Point adalah aplikasi Point of Sale (POS) berbasis web modern yang dirancang
 * **Hosting:** Vercel (Frontend & Serverless Backend)
 * **Version Control:** Git & GitHub
 
-## 📦 Instalasi & Setup Lokal
-
-Ikuti panduan di bawah ini untuk menjalankan Alz Point di komputer lokal.
-
-### Prasyarat
-* Node.js (v18+)
-* PHP (v8.3+)
-* Composer
-* MySQL Database
-
-### 1. Setup Backend (Laravel)
-bash
-# Clone repositori
-git clone [https://github.com/username/alzpoint.git](https://github.com/username/alzpoint.git)
-cd alzpoint/be
-
-# Install dependensi PHP
-composer install
-
-# Salin file environment dan generate key
-cp .env.example .env
-php artisan key:generate
-
-# Konfigurasi database di file .env
-# DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=nama_database
-# DB_USERNAME=root
-# DB_PASSWORD=
-
-# Jalankan migrasi dan seeder
-php artisan migrate:fresh --seed
-
-
-# Buka tab terminal baru, masuk ke folder frontend
-cd alzpoint/fe
-
-# Install dependensi Node.js
-npm install
-
-# Buat file environment
-cp .env.example .env
-# Tambahkan konfigurasi URL backend di dalam file .env
-# VITE_API_BASE_URL=http://localhost:8000/api
-
-# Jalankan development server
-npm run dev
 
 💡 Developer
-Dikembangkan oleh Aldo Rendy Julian Alfiansyah (Allzxxo).
+Dikembangkan oleh Aldo Rendy Julian Alfiansyah (Allzxxo) dan Contributor
 Full-stack Web Developer yang berfokus pada pengembangan antarmuka modern (React.js, Tailwind CSS) dan sistem backend yang handal (Laravel, Node.js).
 
-
-# Jalankan server lokal
 php artisan serve
