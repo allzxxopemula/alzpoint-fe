@@ -6,6 +6,7 @@ import usePageEntrance from '../hooks/usePageEntrance';
 import ReceiptHeader, { ReceiptFooter } from '../components/ReceiptBranding';
 import gsap from 'gsap';
 import { areGsapAnimationsEnabled, isCashierImageHidden } from '../utils/gsapPreference';
+import playSound from '../utils/sound';
 import { 
   faSearch, 
   faTrash, 
@@ -112,7 +113,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     return matchesCategory && matchesSearch;
   });
 
-  // GSAP: Murni Fade In Cepat tanpa Gerakan (Sangat Responsif untuk Kasir)
+  // GSAP: Murni Fade In Cepat tanpa Gerakan
   useEffect(() => {
     if (areGsapAnimationsEnabled() && gridRef.current && filteredProducts.length > 0) {
       gsap.fromTo(
@@ -133,7 +134,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     }
   };
 
-  // GSAP: Flying Ghost Animation
+  // GSAP: Flying Ghost Animation (Masuk Keranjang)
   const handleAddToCartWithAnimation = (e, product) => {
     addToCart(product);
     if (!areGsapAnimationsEnabled()) return;
@@ -148,7 +149,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     ghost.style.zIndex = '9999';
     ghost.style.pointerEvents = 'none';
     
-    // Jika gambar tersedia dan tidak di-hide
     const img = card.querySelector('img'); 
     if (img && !hideImages) {
       const imgRect = img.getBoundingClientRect();
@@ -162,14 +162,11 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       ghost.style.borderRadius = '12px';
       ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
     } else {
-      // Jika mode hide gambar: Gunakan efek bayangan melayang berbentuk Card
       const cardRect = card.getBoundingClientRect();
       ghost.style.top = `${cardRect.top}px`;
       ghost.style.left = `${cardRect.left}px`;
       ghost.style.width = `${cardRect.width}px`;
       ghost.style.height = `${cardRect.height}px`;
-      
-      // Setting efek bayangan menggunakan var(--theme-accent) dengan color-mix untuk transparansi
       ghost.style.backgroundColor = 'transparent';
       ghost.style.border = '2px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)'; 
       ghost.style.borderRadius = '16px'; 
@@ -194,6 +191,105 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
           { scale: 1.3, backgroundColor: '#10B981', color: '#ffffff' }, 
           { scale: 1, duration: 0.25, ease: 'power2.out', clearProps: 'backgroundColor,color' }
         );
+      }
+    });
+  };
+
+  // GSAP: Flying Ghost Animation (Reset / Kembali ke Foto Produk)
+  const handleResetCartWithAnimation = () => {
+    if (cart.length === 0) {
+      resetTransaction();
+      return;
+    }
+
+    if (!areGsapAnimationsEnabled() || !cartBadgeRef.current) {
+      resetTransaction();
+      return;
+    }
+
+    const cartBadgeRect = cartBadgeRef.current.getBoundingClientRect();
+    const itemsToAnimate = [...cart];
+
+    let completedCount = 0;
+    const checkComplete = () => {
+      completedCount++;
+      if (completedCount >= itemsToAnimate.length) {
+        resetTransaction();
+      }
+    };
+
+    itemsToAnimate.forEach((item, index) => {
+      const targetCard = gridRef.current?.querySelector(`[data-product-id="${item.id}"]`);
+      
+      const ghost = document.createElement('div');
+      ghost.style.position = 'fixed';
+      ghost.style.zIndex = '9999';
+      ghost.style.pointerEvents = 'none';
+
+      const startX = cartBadgeRect.left;
+      const startY = cartBadgeRect.top;
+
+      ghost.style.top = `${startY}px`;
+      ghost.style.left = `${startX}px`;
+      ghost.style.width = '32px';
+      ghost.style.height = '32px';
+      ghost.style.opacity = '1';
+
+      if (item.image && !hideImages) {
+        ghost.style.backgroundImage = `url(${item.image})`;
+        ghost.style.backgroundSize = 'cover';
+        ghost.style.backgroundPosition = 'center';
+        ghost.style.borderRadius = '12px';
+        ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.25)';
+      } else {
+        ghost.style.backgroundColor = 'transparent';
+        ghost.style.border = '2px solid color-mix(in srgb, var(--theme-accent) 40%, transparent)';
+        ghost.style.borderRadius = '12px';
+        ghost.style.boxShadow = '0 10px 25px color-mix(in srgb, var(--theme-accent) 40%, transparent)';
+      }
+
+      document.body.appendChild(ghost);
+
+      if (targetCard) {
+        const imgEl = targetCard.querySelector('img');
+        const destRect = (imgEl && !hideImages) 
+          ? imgEl.getBoundingClientRect() 
+          : targetCard.getBoundingClientRect();
+
+        gsap.to(ghost, {
+          x: destRect.left - startX,
+          y: destRect.top - startY,
+          width: destRect.width,
+          height: destRect.height,
+          scale: 1,
+          opacity: 0.1,
+          duration: 0.45,
+          delay: index * 0.06,
+          ease: 'power3.inOut',
+          onComplete: () => {
+            ghost.remove();
+            gsap.fromTo(targetCard,
+              { scale: 0.95 },
+              { scale: 1, duration: 0.25, ease: 'back.out(1.7)' }
+            );
+            checkComplete();
+          }
+        });
+      } else {
+        const gridRect = gridRef.current ? gridRef.current.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2 };
+        gsap.to(ghost, {
+          x: gridRect.left - startX + 50,
+          y: gridRect.top - startY + 50,
+          scale: 0.1,
+          opacity: 0,
+          duration: 0.35,
+          delay: index * 0.05,
+          ease: 'power2.in',
+          onComplete: () => {
+            ghost.remove();
+            checkComplete();
+          }
+        });
       }
     });
   };
@@ -243,6 +339,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       return;
     }
     if (!customerName.trim()) {
+      playSound('cancel');
       setCheckoutError('Nama pelanggan wajib diisi.');
       return;
     }
@@ -253,6 +350,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
           { x: 5, duration: 0.05, yoyo: true, repeat: 5, ease: 'none', onComplete: () => gsap.set(checkoutBtnRef.current, { clearProps: 'all' }) }
         );
       }
+      playSound('cancel');
       setCheckoutError('Nominal tunai belum mencukupi total pembelian.');
       return;
     }
@@ -270,7 +368,9 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       setCheckoutOrder(response.data.data);
       setOrderNumber(response.data.data.order_number);
       setIsSuccessModalOpen(true);
+      playSound('confirm');
     } catch (error) {
+      playSound('cancel');
       setCheckoutError(error.response?.data?.message || 'Pesanan gagal dikirim. Coba lagi.');
     } finally {
       setCheckoutLoading(false);
@@ -340,10 +440,10 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
+              data-product-id={product.id}
               onClick={(e) => handleAddToCartWithAnimation(e, product)}
               className="bg-white rounded-2xl border border-slate-100 p-3 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between group relative active:scale-[0.98]"
             >
-              {/* Gambar Tampil / Sembunyi Berdasarkan Konfigurasi */}
               {!hideImages ? (
                 <div className="relative w-full h-28 rounded-xl overflow-hidden mb-3 bg-slate-100">
                   <img
@@ -391,7 +491,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
               {cart.length > 0 && (
                 <button
                   type="button"
-                  onClick={resetTransaction}
+                  onClick={handleResetCartWithAnimation}
                   className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-md transition-colors"
                   title="Reset seluruh isi keranjang & form"
                 >
@@ -417,15 +517,26 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
             ) : (
               cart.map((item) => (
                 <div key={item.id} className="py-3 flex items-center justify-between gap-3 animate-in fade-in duration-200">
-                  <div className="flex-1">
-                    <h4 className="text-xs font-bold text-slate-800 line-clamp-1">{item.name}</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Rp {item.price.toLocaleString('id-ID')} x {item.qty}
-                    </p>
+                  
+                  {/* GAMBAR PRODUK & INFO ITEM */}
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                    {!hideImages && item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-100 bg-slate-50"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-bold text-slate-800 line-clamp-1">{item.name}</h4>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Rp {item.price.toLocaleString('id-ID')} x {item.qty}
+                      </p>
+                    </div>
                   </div>
 
                   {/* KONTROL QUANTITY */}
-                  <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200 shrink-0">
                     <button
                       onClick={() => updateQty(item.id, -1)}
                       className="w-5 h-5 bg-white text-slate-600 rounded flex items-center justify-center text-xs shadow-xs active:scale-75 transition-transform"
@@ -441,13 +552,13 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
                     </button>
                   </div>
 
-                  <span className="text-xs font-bold text-slate-900 min-w-[4.5rem] text-right">
+                  <span className="text-xs font-bold text-slate-900 min-w-[4rem] text-right shrink-0">
                     Rp {(item.price * item.qty).toLocaleString('id-ID')}
                   </span>
 
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="text-rose-400 hover:text-rose-600 active:scale-75 text-xs p-1 transition-transform"
+                    className="text-rose-400 hover:text-rose-600 active:scale-75 text-xs p-1 transition-transform shrink-0"
                   >
                     <FontAwesomeIcon icon={faTrash} />
                   </button>
@@ -459,7 +570,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
 
         {/* METODE PEMBAYARAN & TOTAL */}
         <div className="shrink-0 border-t border-slate-100 pt-4 space-y-4">
-          {/* INPUT NAMA PELANGGAN (Wajib Diisi oleh Kasir/Admin maupun Pelanggan) */}
+          {/* INPUT NAMA PELANGGAN */}
           <div>
             <label htmlFor="customer-name" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
               Nama Pelanggan
@@ -529,9 +640,9 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
                 {cashAmount !== '' && (
                   <button
                     type="button"
-                    onClick={() => setCashAmount('')}
+                    onClick={handleResetCartWithAnimation}
                     className="shrink-0 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 active:scale-95 transition-all hover:bg-rose-100"
-                    title="Kosongkan uang"
+                    title="Kosongkan uang dan reset keranjang"
                   >
                     Reset
                   </button>

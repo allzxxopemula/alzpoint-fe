@@ -5,6 +5,7 @@ import useCooperativeSettings from '../hooks/useCooperativeSettings';
 import usePageEntrance from '../hooks/usePageEntrance';
 import ReceiptHeader, { ReceiptFooter } from '../components/ReceiptBranding';
 import ReceiptModal from '../components/ReceiptModal';
+import playSound from '../utils/sound';
 import { 
   faSearch, 
   faCheckCircle, 
@@ -145,6 +146,7 @@ const Transaksi = () => {
     });
     setConfirmSaving(false);
     if (completedOrder) {
+      playSound('confirm'); // Efek Suara Konfirmasi Berhasil
       setConfirmNonCashOrder(null);
       setSelectedTrx(null);
       setReceiptTransaction(completedOrder);
@@ -157,6 +159,7 @@ const Transaksi = () => {
 
     const amount = Number(cashReceivedInput);
     if (amount < confirmOrder.total) {
+      playSound('cancel'); // Efek Suara Gagal/Kurang Uang
       setConfirmError('Uang diterima belum mencukupi total pembayaran.');
       return;
     }
@@ -168,6 +171,7 @@ const Transaksi = () => {
     });
     setConfirmSaving(false);
     if (completedOrder) {
+      playSound('confirm'); // Efek Suara Konfirmasi Berhasil
       setConfirmOrder(null);
       setSelectedTrx(null);
       setReceiptTransaction(completedOrder);
@@ -293,7 +297,10 @@ const Transaksi = () => {
                             Confirm
                           </button>
                           <button
-                            onClick={() => handleUpdateStatus(trx.orderId, 'canceled')}
+                            onClick={() => {
+                              playSound('cancel'); // Suara Cancel saat membatalkan transaksi dari tabel
+                              handleUpdateStatus(trx.orderId, 'canceled');
+                            }}
                             className="bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded-lg text-xs font-semibold transition"
                           >
                             Cancel
@@ -343,7 +350,10 @@ const Transaksi = () => {
                 <h3 className="text-base font-bold text-slate-900">Detail Transaksi</h3>
               </div>
               <button
-                onClick={() => setSelectedTrx(null)}
+                onClick={() => {
+                  playSound('cancel'); // Suara Batal/Tutup Modal
+                  setSelectedTrx(null);
+                }}
                 className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1"
               >
                 ✕
@@ -471,7 +481,10 @@ const Transaksi = () => {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setConfirmOrder(null)}
+                onClick={() => {
+                  playSound('cancel'); // Suara Batal
+                  setConfirmOrder(null);
+                }}
                 disabled={confirmSaving}
                 className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
               >
@@ -503,7 +516,10 @@ const Transaksi = () => {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setConfirmNonCashOrder(null)}
+                onClick={() => {
+                  playSound('cancel'); // Suara Batal
+                  setConfirmNonCashOrder(null);
+                }}
                 disabled={confirmSaving}
                 className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
               >
