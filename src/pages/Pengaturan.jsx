@@ -3,7 +3,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { createCashier, createDiscount, deleteCashier, deleteDiscount, getCashiers, getCooperativeSettings, getDiscounts, updateCashier, updateCooperativeSettings } from '../api/kopsis';
 import usePageEntrance from '../hooks/usePageEntrance';
 import CategoryManager from '../components/CategoryManager';
-import { areGsapAnimationsEnabled, setGsapAnimationsEnabled } from '../utils/gsapPreference';
+import { 
+  areGsapAnimationsEnabled, 
+  setGsapAnimationsEnabled,
+  isCashierImageHidden,
+  setCashierImageHidden
+} from '../utils/gsapPreference';
 import { 
   faStore, 
   faUsersGear, 
@@ -39,7 +44,10 @@ const Pengaturan = ({ currentUser }) => {
   const [discountSaving, setDiscountSaving] = useState(false);
   const [discountError, setDiscountError] = useState('');
   const [discountSuccess, setDiscountSuccess] = useState('');
+  
+  // State Preferensi
   const [animationsEnabled, setAnimationsEnabled] = useState(() => areGsapAnimationsEnabled());
+  const [hideImages, setHideImages] = useState(() => isCashierImageHidden());
 
   // Form State Profil Toko
   const [storeInfo, setStoreInfo] = useState({
@@ -64,6 +72,12 @@ const Pengaturan = ({ currentUser }) => {
     const enabled = event.target.checked;
     setAnimationsEnabled(enabled);
     setGsapAnimationsEnabled(enabled);
+  };
+
+  const handleHideImagesToggle = (event) => {
+    const hidden = event.target.checked;
+    setHideImages(hidden);
+    setCashierImageHidden(hidden);
   };
 
   useEffect(() => {
@@ -132,7 +146,6 @@ const Pengaturan = ({ currentUser }) => {
     };
   }, [activeTab, isAdmin]);
 
-  // Submit Simpan Profil Toko
   const handleSaveStoreInfo = async (e) => {
     e.preventDefault();
     setSettingsSaving(true);
@@ -309,7 +322,7 @@ const Pengaturan = ({ currentUser }) => {
             }`}
           >
             <FontAwesomeIcon icon={faSliders} />
-            <span>Animasi</span>
+            <span>Animasi & Tampilan</span>
           </button>
 
           {isAdmin && (
@@ -509,27 +522,48 @@ const Pengaturan = ({ currentUser }) => {
 
       {activeTab === 'categories' && isAdmin && <CategoryManager />}
 
-      {/* PENGATURAN ANIMASI */}
+      {/* PENGATURAN ANIMASI & TAMPILAN */}
       {activeTab === 'sistem' && (
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm w-full space-y-4 text-xs">
           <div>
-            <h3 className="font-bold text-slate-900 text-base">Efek Animasi</h3>
-            <p className="mt-1 text-slate-400">Simpan preferensi animasi GSAP hanya untuk akun ini.</p>
+            <h3 className="font-bold text-slate-900 text-base">Preferensi Animasi & Tampilan Kasir</h3>
+            <p className="mt-1 text-slate-400">Sesuaikan preferensi animasi GSAP dan tampilan produk pada halaman kasir.</p>
           </div>
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-            <div>
-              <label htmlFor="gsap-animation-toggle" className="font-bold text-slate-800">Aktifkan animasi GSAP</label>
-              <p className="mt-1 text-[11px] text-slate-400">{animationsEnabled ? 'Efek entrance dan interaksi berjalan.' : 'Semua efek GSAP dinonaktifkan.'}</p>
+          
+          <div className="space-y-3">
+            {/* TOGGLE GSAP ANIMATION */}
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div>
+                <label htmlFor="gsap-animation-toggle" className="font-bold text-slate-800">Aktifkan animasi GSAP</label>
+                <p className="mt-1 text-[11px] text-slate-400">{animationsEnabled ? 'Efek entrance dan interaksi berjalan.' : 'Semua efek GSAP dinonaktifkan.'}</p>
+              </div>
+              <input
+                id="gsap-animation-toggle"
+                name="gsap_animations_enabled"
+                type="checkbox"
+                role="switch"
+                checked={animationsEnabled}
+                onChange={handleAnimationToggle}
+                className="h-5 w-9 cursor-pointer accent-indigo-600"
+              />
             </div>
-            <input
-              id="gsap-animation-toggle"
-              name="gsap_animations_enabled"
-              type="checkbox"
-              role="switch"
-              checked={animationsEnabled}
-              onChange={handleAnimationToggle}
-              className="h-5 w-9 cursor-pointer accent-indigo-600"
-            />
+
+            {/* TOGGLE HIDE CASHIER IMAGES */}
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div>
+                <label htmlFor="hide-cashier-images-toggle" className="font-bold text-slate-800">Sembunyikan gambar produk di halaman Kasir</label>
+                <p className="mt-1 text-[11px] text-slate-400">{hideImages ? 'Gambar produk disembunyikan agar tampilan kasir lebih ringkas.' : 'Gambar produk ditampilkan di katalog kasir.'}</p>
+              </div>
+              <input
+                id="hide-cashier-images-toggle"
+                name="hide_cashier_images"
+                type="checkbox"
+                role="switch"
+                checked={hideImages}
+                onChange={handleHideImagesToggle}
+                className="h-5 w-9 cursor-pointer accent-indigo-600"
+              />
+            </div>
           </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import useCooperativeSettings from '../hooks/useCooperativeSettings';
 import usePageEntrance from '../hooks/usePageEntrance';
 import ReceiptHeader, { ReceiptFooter } from '../components/ReceiptBranding';
 import gsap from 'gsap';
-import { areGsapAnimationsEnabled } from '../utils/gsapPreference';
+import { areGsapAnimationsEnabled, isCashierImageHidden } from '../utils/gsapPreference';
 import { 
   faSearch, 
   faTrash, 
@@ -46,6 +46,9 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [checkoutOrder, setCheckoutOrder] = useState(null);
   
+  // Membaca status hide gambar khusus kasir
+  const hideImages = isCashierImageHidden();
+
   const paymentOptions = [
     { name: 'Tunai', value: 'tunai', icon: faMoneyBillWave },
     { name: 'QRIS', value: 'qris', icon: faQrcode },
@@ -136,31 +139,51 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     if (!areGsapAnimationsEnabled()) return;
 
     const card = e.currentTarget;
-    const img = card.querySelector('img'); 
-    
-    if (!img || !cartBadgeRef.current) return;
+    const targetRect = cartBadgeRef.current?.getBoundingClientRect();
 
-    const imgRect = img.getBoundingClientRect();
-    const targetRect = cartBadgeRef.current.getBoundingClientRect();
+    if (!targetRect) return;
 
     const ghost = document.createElement('div');
     ghost.style.position = 'fixed';
-    ghost.style.top = `${imgRect.top}px`;
-    ghost.style.left = `${imgRect.left}px`;
-    ghost.style.width = `${imgRect.width}px`;
-    ghost.style.height = `${imgRect.height}px`;
-    ghost.style.backgroundImage = `url(${product.image})`;
-    ghost.style.backgroundSize = 'cover';
-    ghost.style.backgroundPosition = 'center';
-    ghost.style.borderRadius = '12px';
     ghost.style.zIndex = '9999';
     ghost.style.pointerEvents = 'none';
-    ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+    
+    // Jika gambar tersedia dan tidak di-hide
+    const img = card.querySelector('img'); 
+    if (img && !hideImages) {
+      const imgRect = img.getBoundingClientRect();
+      ghost.style.top = `${imgRect.top}px`;
+      ghost.style.left = `${imgRect.left}px`;
+      ghost.style.width = `${imgRect.width}px`;
+      ghost.style.height = `${imgRect.height}px`;
+      ghost.style.backgroundImage = `url(${product.image})`;
+      ghost.style.backgroundSize = 'cover';
+      ghost.style.backgroundPosition = 'center';
+      ghost.style.borderRadius = '12px';
+      ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+    } else {
+      // Jika mode hide gambar: Gunakan efek bayangan melayang berbentuk Card
+      const cardRect = card.getBoundingClientRect();
+      ghost.style.top = `${cardRect.top}px`;
+      ghost.style.left = `${cardRect.left}px`;
+      ghost.style.width = `${cardRect.width}px`;
+      ghost.style.height = `${cardRect.height}px`;
+      
+      // Setting efek bayangan menggunakan var(--theme-accent) dengan color-mix untuk transparansi
+      ghost.style.backgroundColor = 'transparent';
+      ghost.style.border = '2px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)'; 
+      ghost.style.borderRadius = '16px'; 
+      ghost.style.boxShadow = '0 15px 35px color-mix(in srgb, var(--theme-accent) 40%, transparent), inset 0 0 20px color-mix(in srgb, var(--theme-accent) 20%, transparent)'; 
+    }
+
     document.body.appendChild(ghost);
 
+    const startX = parseFloat(ghost.style.left);
+    const startY = parseFloat(ghost.style.top);
+
     gsap.to(ghost, {
-      x: targetRect.left - imgRect.left,
-      y: targetRect.top - imgRect.top,
+      x: targetRect.left - startX,
+      y: targetRect.top - startY,
       scale: 0.1,
       opacity: 0,
       duration: 0.45,
@@ -169,7 +192,8 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         ghost.remove(); 
         gsap.fromTo(cartBadgeRef.current, 
           { scale: 1.3, backgroundColor: '#10B981', color: '#ffffff' }, 
-          { scale: 1, backgroundColor: '#EEF2FF', color: '#4F46E5', duration: 0.25, ease: 'power2.out' }
+          // Hapus set warna eksplisit agar bisa dikontrol kembali oleh class/CSS theme default saat selesai
+          { scale: 1, duration: 0.25, ease: 'power2.out', clearProps: 'backgroundColor,color' }
         );
       }
     });
@@ -204,14 +228,13 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     if (areGsapAnimationsEnabled() && totalPriceRef.current && total > 0) {
       gsap.fromTo(totalPriceRef.current,
         { scale: 1.1, color: '#10B981' }, 
-        { scale: 1, color: '#4F46E5', duration: 0.3, ease: 'power2.out', overwrite: 'auto' }
+        { scale: 1, duration: 0.3, ease: 'power2.out', overwrite: 'auto', clearProps: 'color' }
       );
     }
   }, [total]);
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
-      // GSAP: Animasi Shake Keranjang Kosong
       if (areGsapAnimationsEnabled()) {
         gsap.fromTo(checkoutBtnRef.current,
           { x: -5 },
@@ -320,18 +343,31 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
               onClick={(e) => handleAddToCartWithAnimation(e, product)}
               className="bg-white rounded-2xl border border-slate-100 p-3 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between group relative active:scale-[0.98]"
             >
-              <div className="relative w-full h-28 rounded-xl overflow-hidden mb-3 bg-slate-100">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                />
-                <span className="absolute top-2 right-2 bg-slate-900/70 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-md font-medium">
-                  Stok: {product.stock}
-                </span>
-              </div>
+              {/* Gambar Tampil / Sembunyi Berdasarkan Konfigurasi */}
+              {!hideImages ? (
+                <div className="relative w-full h-28 rounded-xl overflow-hidden mb-3 bg-slate-100">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  />
+                  <span className="absolute top-2 right-2 bg-slate-900/70 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-md font-medium">
+                    Stok: {product.stock}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">{product.category}</span>
+                  <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-md font-medium">
+                    Stok: {product.stock}
+                  </span>
+                </div>
+              )}
+
               <div>
-                <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">{product.category}</span>
+                {!hideImages && (
+                  <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">{product.category}</span>
+                )}
                 <h3 className="text-xs font-bold text-slate-800 line-clamp-2 mt-0.5">{product.name}</h3>
               </div>
               <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-50">

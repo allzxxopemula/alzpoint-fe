@@ -1,17 +1,20 @@
 export const GSAP_PREFERENCE_EVENT = 'gsap-preference-change';
+export const HIDE_IMAGES_PREFERENCE_EVENT = 'hide-images-preference-change';
 
-const getPreferenceKey = () => {
+const getStorageKey = (prefix) => {
   try {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
-    return `gsap-animations:${user?.user_id ?? user?.username ?? 'guest'}`;
+    return `${prefix}:${user?.user_id ?? user?.username ?? 'guest'}`;
   } catch {
-    return 'gsap-animations:guest';
+    return `${prefix}:guest`;
   }
 };
 
+// --- GSAP ANIMATIONS PREFERENCE ---
+
 export const areGsapAnimationsEnabled = () => {
   try {
-    return localStorage.getItem(getPreferenceKey()) !== 'false';
+    return localStorage.getItem(getStorageKey('gsap-animations')) !== 'false';
   } catch {
     return true;
   }
@@ -19,10 +22,34 @@ export const areGsapAnimationsEnabled = () => {
 
 export const setGsapAnimationsEnabled = (enabled) => {
   try {
-    localStorage.setItem(getPreferenceKey(), String(enabled));
+    localStorage.setItem(getStorageKey('gsap-animations'), String(enabled));
   } catch {
     // Keep the setting active for the current page when storage is unavailable.
   }
 
   window.dispatchEvent(new CustomEvent(GSAP_PREFERENCE_EVENT, { detail: { enabled } }));
 };
+
+// --- HIDE IMAGES PREFERENCE ---
+
+export const isCashierImageHidden = () => {
+  try {
+    return localStorage.getItem(getStorageKey('hide-images')) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const setCashierImageHidden = (hidden) => {
+  try {
+    localStorage.setItem(getStorageKey('hide-images'), String(hidden));
+  } catch {
+    // Keep the setting active for the current page when storage is unavailable.
+  }
+
+  window.dispatchEvent(new CustomEvent(HIDE_IMAGES_PREFERENCE_EVENT, { detail: { hidden } }));
+};
+
+// Alias / cadangan untuk kompatibilitas nama fungsi lain
+export const areImagesHidden = isCashierImageHidden;
+export const setHideImagesEnabled = setCashierImageHidden;
