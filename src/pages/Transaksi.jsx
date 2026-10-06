@@ -112,6 +112,7 @@ const Transaksi = () => {
     try {
       const response = await updateOrderStatus(orderId, newStatus, payload);
       const updatedOrder = formatOrder(response.data.data);
+      if (newStatus === 'canceled') playSound('cancel');
       const shouldDisplay = filterStatus === 'Semua' || updatedOrder.status === filterStatus;
       setTransactions((current) => {
         const remaining = current.filter((transaction) => transaction.orderId !== orderId);
@@ -561,7 +562,6 @@ const Transaksi = () => {
               <button
                 type="button"
                 onClick={() => {
-                  playSound('cancel');
                   handleUpdateStatus(cancelOrderConfirm.orderId, 'canceled');
                   setCancelOrderConfirm(null);
                 }}

@@ -9,6 +9,7 @@ import {
   isCashierImageHidden,
   setCashierImageHidden
 } from '../utils/gsapPreference';
+import { areSoundEffectsEnabled, setSoundEffectsEnabled } from '../utils/sound';
 import { 
   faStore, 
   faUsersGear, 
@@ -48,6 +49,7 @@ const Pengaturan = ({ currentUser }) => {
   // State Preferensi
   const [animationsEnabled, setAnimationsEnabled] = useState(() => areGsapAnimationsEnabled());
   const [hideImages, setHideImages] = useState(() => isCashierImageHidden());
+  const [soundEffectsEnabled, setSoundEffectsEnabledState] = useState(() => areSoundEffectsEnabled());
 
   // Form State Profil Toko
   const [storeInfo, setStoreInfo] = useState({
@@ -78,6 +80,12 @@ const Pengaturan = ({ currentUser }) => {
     const hidden = event.target.checked;
     setHideImages(hidden);
     setCashierImageHidden(hidden);
+  };
+
+  const handleSoundEffectsToggle = (event) => {
+    const enabled = event.target.checked;
+    setSoundEffectsEnabledState(enabled);
+    setSoundEffectsEnabled(enabled);
   };
 
   useEffect(() => {
@@ -561,6 +569,22 @@ const Pengaturan = ({ currentUser }) => {
                 role="switch"
                 checked={hideImages}
                 onChange={handleHideImagesToggle}
+                className="h-5 w-9 cursor-pointer accent-indigo-600"
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div>
+                <label htmlFor="sound-effects-toggle" className="font-bold text-slate-800">Aktifkan efek suara</label>
+                <p className="mt-1 text-[11px] text-slate-400">{soundEffectsEnabled ? 'Efek suara klik, konfirmasi, pembatalan, dan reset aktif.' : 'Semua efek suara dinonaktifkan.'}</p>
+              </div>
+              <input
+                id="sound-effects-toggle"
+                name="sound_effects_enabled"
+                type="checkbox"
+                role="switch"
+                checked={soundEffectsEnabled}
+                onChange={handleSoundEffectsToggle}
                 className="h-5 w-9 cursor-pointer accent-indigo-600"
               />
             </div>

@@ -23,17 +23,6 @@ import {
   faTimes
 } from '@fortawesome/free-solid-svg-icons';
 
-// Helper pemutar efek suara dari folder public
-const playClickSound = () => {
-  const audio = new Audio('/kliksound.mp3');
-  audio.play().catch(() => {});
-};
-
-const playCancelCartSound = () => {
-  const audio = new Audio('/cancelkeranjang.mp3');
-  audio.play().catch(() => {});
-};
-
 const Kasir = ({ currentUser, selfCheckout = false }) => {
   const pageRef = usePageEntrance();
   const cartBadgeRef = useRef(null);
@@ -147,7 +136,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
 
   // Flying Ghost Animation (Masuk Keranjang + Suara Klik)
   const handleAddToCartWithAnimation = (e, product) => {
-    playClickSound(); // Putar kliksound.mp3
+    playSound('click');
     addToCart(product);
     if (!areGsapAnimationsEnabled()) return;
 
@@ -209,7 +198,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
 
   // Flying Ghost Animation (Reset Keranjang + Suara Cancel)
   const handleResetCartWithAnimation = () => {
-    playCancelCartSound(); // Putar cancelkeranjang.mp3
+    playSound('reset');
 
     if (cart.length === 0) {
       resetTransaction();
