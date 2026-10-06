@@ -9,8 +9,19 @@ import {
   faArrowRight,
   faEye,
   faEyeSlash,
-  faCheckCircle
+  faCheckCircle,
+  faCode,
+  faXmark,
+  faLaptopCode,
+  faServer,
+  faExternalLink
 } from '@fortawesome/free-solid-svg-icons';
+
+// =========================================================
+// KONSTANTA LINK REPOSITORI SOURCE CODE
+// =========================================================
+const FRONTEND_REPO_URL = "https://github.com/allzxxopemula/alzpoint-fe"; 
+const BACKEND_REPO_URL = "https://github.com/allzxxopemula/alzpoint-be";   
 
 const Login = ({ setCurrentUser }) => {
   const pageRef = usePageEntrance();
@@ -19,6 +30,10 @@ const Login = ({ setCurrentUser }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  
+  // State untuk modal overlay Source Code
+  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -41,8 +56,107 @@ const Login = ({ setCurrentUser }) => {
   };
 
   return (
-    <div ref={pageRef} className="min-h-screen w-full flex flex-col lg:flex-row font-sans bg-white">
+    <div ref={pageRef} className="min-h-screen w-full flex flex-col lg:flex-row font-sans bg-white relative">
       
+      {/* =========================================================
+          TOMBOL POJOK KANAN ATAS: LIHAT SOURCE CODE
+          ========================================================= */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-30">
+        <button
+          type="button"
+          onClick={() => setIsSourceModalOpen(true)}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white backdrop-blur-md border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-300 shadow-sm hover:shadow transition-all duration-200 text-xs sm:text-sm font-semibold active:scale-95"
+        >
+          <FontAwesomeIcon icon={faCode} className="text-blue-600 text-sm" />
+          <span>Source Code</span>
+        </button>
+      </div>
+
+      {/* =========================================================
+          MODAL OVERLAY: SOURCE CODE (FRONT END & BACK END)
+          ========================================================= */}
+      {isSourceModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSourceModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl max-w-sm sm:max-w-md w-full p-6 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat area dalam diklik
+          >
+            {/* Header Modal */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                  <FontAwesomeIcon icon={faCode} className="text-base" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-900">Source Code</h3>
+                  <p className="text-xs text-slate-500 font-medium">Pilih repositori proyek yang ingin diliat</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSourceModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                aria-label="Tutup modal"
+              >
+                <FontAwesomeIcon icon={faXmark} className="text-lg" />
+              </button>
+            </div>
+
+            {/* Pilihan Repositori */}
+            <div className="space-y-3">
+              {/* Option 1: Front End */}
+              <a
+                href={FRONTEND_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 group transition-all duration-200"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <FontAwesomeIcon icon={faLaptopCode} className="text-base" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                      Front-End Repository
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium">
+                      React.js & Tailwind CSS
+                    </p>
+                  </div>
+                </div>
+                <FontAwesomeIcon icon={faExternalLink} className="text-slate-400 group-hover:text-blue-600 text-xs transition-colors" />
+              </a>
+
+              {/* Option 2: Back End */}
+              <a
+                href={BACKEND_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 group transition-all duration-200"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <FontAwesomeIcon icon={faServer} className="text-base" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                      Back-End Repository
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Laravel API
+                    </p>
+                  </div>
+                </div>
+                <FontAwesomeIcon icon={faExternalLink} className="text-slate-400 group-hover:text-blue-600 text-xs transition-colors" />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* =========================================================
           PANEL KIRI: BRANDING & INFORMASI (BACKGROUND BIRU MUDA / SOFT)
           ========================================================= */}
@@ -103,7 +217,7 @@ const Login = ({ setCurrentUser }) => {
           ========================================================= */}
       <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-center p-6 sm:p-10 md:p-16 bg-white relative z-10">
         
-        {/* LOGO MOBILE (Hanya tampil di layar kecil, diposisikan inline agar tidak menimpa form) */}
+        {/* LOGO MOBILE (Hanya tampil di layar kecil) */}
         <div className="lg:hidden flex items-center gap-2 mb-8 sm:mb-10">
           <img 
             src="https://i.ibb.co.com/PsC1KSyz/Chat-GPT-Image-4-Okt-2026-14-45-38-removebg-preview-1.png" 
