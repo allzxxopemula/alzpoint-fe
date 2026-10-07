@@ -139,7 +139,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     playSound('click');
     addToCart(product);
 
-    // Jika GSAP mati atau opsi hideImages aktif, batalkan semua animasi
     if (!areGsapAnimationsEnabled() || hideImages) return;
 
     const card = e.currentTarget;
@@ -152,17 +151,24 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
     ghost.style.zIndex = '9999';
     ghost.style.pointerEvents = 'none';
     
-    const img = card.querySelector('img'); 
-    if (img) {
-      const imgRect = img.getBoundingClientRect();
-      ghost.style.top = `${imgRect.top}px`;
-      ghost.style.left = `${imgRect.left}px`;
-      ghost.style.width = `${imgRect.width}px`;
-      ghost.style.height = `${imgRect.height}px`;
-      ghost.style.backgroundImage = `url(${product.image})`;
-      ghost.style.backgroundSize = 'cover';
-      ghost.style.backgroundPosition = 'center';
-      ghost.style.borderRadius = '12px';
+    const imgContainer = card.querySelector('.relative.w-full.h-28') || card.querySelector('img'); 
+    const sourceEl = imgContainer || card;
+    const computedRadius = window.getComputedStyle(sourceEl).borderRadius;
+
+    if (sourceEl) {
+      const sourceRect = sourceEl.getBoundingClientRect();
+      ghost.style.top = `${sourceRect.top}px`;
+      ghost.style.left = `${sourceRect.left}px`;
+      ghost.style.width = `${sourceRect.width}px`;
+      ghost.style.height = `${sourceRect.height}px`;
+      if (product.image) {
+        ghost.style.backgroundImage = `url(${product.image})`;
+        ghost.style.backgroundSize = 'cover';
+        ghost.style.backgroundPosition = 'center';
+      } else {
+        ghost.style.backgroundColor = '#f1f5f9';
+      }
+      ghost.style.borderRadius = computedRadius || 'var(--card-radius, 12px)';
       ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
     }
 
@@ -176,6 +182,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
       y: targetRect.top - startY,
       scale: 0.1,
       opacity: 0,
+      borderRadius: '50%',
       duration: 0.45,
       ease: 'power3.inOut',
       onComplete: () => {
@@ -229,15 +236,18 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         ghost.style.backgroundImage = `url(${item.image})`;
         ghost.style.backgroundSize = 'cover';
         ghost.style.backgroundPosition = 'center';
-        ghost.style.borderRadius = '12px';
-        ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.25)';
+      } else {
+        ghost.style.backgroundColor = '#f1f5f9';
       }
+      ghost.style.borderRadius = '50%';
+      ghost.style.boxShadow = '0 10px 25px rgba(0,0,0,0.25)';
 
       document.body.appendChild(ghost);
 
       if (targetCard) {
-        const imgEl = targetCard.querySelector('img');
-        const destRect = imgEl ? imgEl.getBoundingClientRect() : targetCard.getBoundingClientRect();
+        const imgEl = targetCard.querySelector('.relative.w-full.h-28') || targetCard.querySelector('img') || targetCard;
+        const destRect = imgEl.getBoundingClientRect();
+        const destRadius = window.getComputedStyle(imgEl).borderRadius || 'var(--card-radius, 12px)';
 
         gsap.to(ghost, {
           x: destRect.left - startX,
@@ -246,6 +256,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
           height: destRect.height,
           scale: 1,
           opacity: 0.1,
+          borderRadius: destRadius,
           duration: 0.45,
           delay: index * 0.06,
           ease: 'power3.inOut',
