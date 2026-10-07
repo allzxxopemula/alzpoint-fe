@@ -1,16 +1,48 @@
-# React + Vite
+# Alz Point - Modern POS & Koperasi Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Alz Point Thumbnail](https://i.ibb.co.com/gM1ZvhXF/thumbnail.png)
 
-Currently, two official plugins are available:
+Alz Point adalah aplikasi Point of Sale (POS) berbasis web modern yang dirancang khusus untuk mengoptimalkan manajemen transaksi kasir, inventaris produk, dan pelaporan keuangan. Dibangun dengan arsitektur *headless* yang memisahkan frontend reaktif dan backend API yang solid, aplikasi ini menawarkan pengalaman pengguna yang cepat, mulus, dan sangat dapat dikustomisasi.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Fitur Utama
 
-## React Compiler
+* **Sistem Transaksi Kasir (POS) Interaktif:** Antarmuka kasir yang intuitif dengan fitur pencarian, filter kategori, keranjang belanja *real-time*, perhitungan kembalian, dan modal overlay pembayaran kasir yang efisien[cite: 11, 12].
+* **Smart AI Assistant:** Asisten cerdas terintegrasi untuk membantu kasir menjawab pertanyaan operasional, memberikan tips manajemen stok, dan panduan penggunaan sistem[cite: 13].
+* **Dashboard Analitik Komprehensif:** Pemantauan data secara langsung melalui grafik interaktif yang menampilkan total pendapatan, jumlah transaksi, item terjual, dan rata-rata nilai transaksi dengan filter waktu[cite: 14].
+* **Manajemen Produk & Katalog:** Sistem manajemen inventaris (CRUD) yang efisien untuk mengelola data barang, harga, dan memantau ketersediaan stok[cite: 15].
+* **Kustomisasi Tema Dinamis:** Personalisasi tampilan aplikasi secara penuh. Pengguna dapat memilih mode warna (Terang/Gelap/Default), warna aksen utama, hingga radius sudut antarmuka kartu (Kotak, Tipis, Sedang, Lembut)[cite: 16].
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Teknologi yang Digunakan
 
-## Expanding the ESLint configuration
+### Frontend
+* **Framework:** React.js dengan Vite
+* **Styling:** Tailwind CSS
+* **Animasi:** GSAP (GreenSock Animation Platform) untuk interaksi UI yang mulus
+* **HTTP Client:** Axios dengan Interceptors
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Backend
+* **Framework:** Laravel 11/13 (PHP 8.3)
+* **Database:** MySQL (Aiven Cloud)
+* **Autentikasi:** Laravel Sanctum (Token-based Auth)
+
+### Infrastruktur & Deployment
+* **Hosting:** Vercel (Frontend & Serverless Backend)
+* **Version Control:** Git & GitHub
+
+
+💡 Developer
+Dikembangkan oleh Aldo Rendy Julian Alfiansyah (Allzxxo) dan Team.
+Allzxxo Full-stack Web Developer yang berfokus pada pengembangan antarmuka modern dan sistem backend
+
+
+
+
+
+
+
+
+
+
+
+
+
