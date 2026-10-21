@@ -345,11 +345,7 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
         customer_name: customerName.trim(),
         customer_id: currentUser?.role === 'pelanggan' ? currentUser.user_id : null,
         payment_method: paymentMethod,
-<<<<<<< HEAD
-        ...(!selfCheckout && { cash_received: total }),
-=======
         cash_received: total,
->>>>>>> d488a2e16d3be7b357a78b1aeec8511e492c31b0
         items: cart.map((item) => ({ product_id: item.id, quantity: item.qty, price: item.price })),
       });
       setCheckoutOrder(response.data.data);
@@ -645,20 +641,6 @@ const Kasir = ({ currentUser, selfCheckout = false }) => {
               </div>
             </div>
 
-<<<<<<< HEAD
-            {!selfCheckout && paymentMethod === 'tunai' && (
-              <div className="animate-in fade-in duration-200 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-                  Tunai
-                </p>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Nominal uang yang diterima akan diinput oleh kasir atau admin saat transaksi dibayar.
-                </p>
-              </div>
-            )}
-
-=======
->>>>>>> d488a2e16d3be7b357a78b1aeec8511e492c31b0
             <div className="pt-2 border-t border-slate-100">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-xs text-slate-500 font-medium">Total Tagihan</span>
